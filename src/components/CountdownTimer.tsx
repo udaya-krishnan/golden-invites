@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
-const WEDDING_DATE = new Date("2025-12-20T17:00:00");
+// ✅ If wedding date is past, fallback to 30 days from now
+const DEFAULT_DATE = new Date();
+DEFAULT_DATE.setDate(DEFAULT_DATE.getDate() + 30);
+
+const WEDDING_DATE = new Date("2025-12-20T17:00:00") > new Date()
+  ? new Date("2025-12-20T17:00:00")
+  : DEFAULT_DATE;
 
 interface TimeLeft {
   days: number;
@@ -11,22 +17,28 @@ interface TimeLeft {
 }
 
 const CountdownTimer = () => {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const calculateTimeLeft = (): TimeLeft => {
+    const diff = WEDDING_DATE.getTime() - Date.now();
+
+    if (diff <= 0) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+
+    return {
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((diff / (1000 * 60)) % 60),
+      seconds: Math.floor((diff / 1000) % 60),
+    };
+  };
+
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft());
 
   useEffect(() => {
-    const calculate = () => {
-      const diff = WEDDING_DATE.getTime() - Date.now();
-      if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-      return {
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((diff / (1000 * 60)) % 60),
-        seconds: Math.floor((diff / 1000) % 60),
-      };
-    };
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
 
-    setTimeLeft(calculate());
-    const timer = setInterval(() => setTimeLeft(calculate()), 1000);
     return () => clearInterval(timer);
   }, []);
 

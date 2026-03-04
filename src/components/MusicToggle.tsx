@@ -10,35 +10,43 @@ const MusicToggle = ({ shouldPlay }: MusicToggleProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Initialize audio once
   useEffect(() => {
-    // Use a royalty-free nasheed-style ambient sound URL
-    audioRef.current = new Audio(
-      "https://cdn.pixabay.com/audio/2024/11/04/audio_4956b8f764.mp3"
-    );
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0.3;
+    const audio = new Audio("/new wedding nasheed.mpeg");
+    audio.loop = true;
+    audio.volume = 0.1;
+    audio.playbackRate = 0.85;
+
+    audioRef.current = audio;
 
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      audio.pause();
+      audioRef.current = null;
     };
   }, []);
 
+  // Play automatically only first time when shouldPlay becomes true
   useEffect(() => {
     if (shouldPlay && audioRef.current && !isPlaying) {
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+      audioRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {});
     }
-  }, [shouldPlay]);
+  }, [shouldPlay]); // ✅ removed isPlaying dependency
 
   const toggleMusic = () => {
-    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
     if (isPlaying) {
-      audioRef.current.pause();
+      audio.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {});
     }
   };
 
@@ -48,8 +56,9 @@ const MusicToggle = ({ shouldPlay }: MusicToggleProps) => {
     <motion.button
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
       onClick={toggleMusic}
-      className="fixed top-4 right-4 z-50 p-3 rounded-full bg-secondary/80 backdrop-blur-sm border border-primary/30 transition-colors hover:bg-secondary"
+      className="fixed top-4 right-4 z-50 p-3 rounded-full bg-secondary/80 backdrop-blur-sm border border-primary/30 hover:bg-secondary transition"
       aria-label={isPlaying ? "Mute music" : "Play music"}
     >
       {isPlaying ? (
